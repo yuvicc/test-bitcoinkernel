@@ -21,59 +21,38 @@ int main() {
        0x34, 0x88, 0x54, 0xc8, 0x38, 0x9f, 0x00, 0x8e, 0x05, 0x02, 0x9d, 0xb7, 0xf4, 0x64, 0xa5, 0xff,
        0x2e, 0x01, 0xd5, 0xe6, 0xe6, 0x26, 0x17, 0x4a, 0xff, 0xd3, 0x0a, 0x00
     };
-
+ 
     // Spends script pubkey 5120339ce7e165e67d93adb3fef88a6d4beed33f01fa876f05a225242b82a631abc0
     static const unsigned char script[] = {
         0x51, 0x20, 0x33, 0x9c, 0xe7, 0xe1, 0x65, 0xe6, 0x7d, 0x93, 0xad, 0xb3, 0xfe, 0xf8, 0x8a, 0x6d,
         0x4b, 0xee, 0xd3, 0x3f, 0x01, 0xfa, 0x87, 0x6f, 0x05, 0xa2, 0x25, 0x24, 0x2b, 0x82, 0xa6, 0x31,
         0xab, 0xc0
-    };
-
+    }; 
+ 
     btck_Transaction* transaction = btck_transaction_create(tx, sizeof(tx));
-    if (transaction == NULL) {
-        printf("Error while creating transaction");
-        return 1;
-    }
-    const btck_Transaction* transaction_ = transaction;
-
+    if (transaction == NULL) return 1;
     btck_ScriptPubkey* script_pubkey = btck_script_pubkey_create(script, sizeof(script));
-    if (script_pubkey == NULL) {
-        printf("Error while creating script pubkey");
-        return 1;
-    }
-    const btck_ScriptPubkey* script_pubkey_ = script_pubkey;
-
+    if (script_pubkey == NULL) return 1;
     int64_t amount = 88480;
-
-    btck_TransactionOutput* spent_outputs = btck_transaction_output_create(script_pubkey, amount);
-    if (spent_outputs == NULL) {
-        printf("Error while creating Transaction Output");
-        return 1;
-    }
-    const btck_TransactionOutput* spent_outputs_ = spent_outputs;
-
-    const btck_TransactionOutput* spent_outputs_array[1] = {spent_outputs_};
-    btck_PrecomputedTransactionData* precomputed_data = btck_precomputed_transaction_data_create(transaction_, spent_outputs_array, 1);
-    if (precomputed_data == NULL) {
-        printf("Precomputed Transaction Data creation failed");
-        return 1;
-    }
-    const btck_PrecomputedTransactionData* precomputed_data_ = precomputed_data;
-
+ 
+    btck_TransactionOutput* output = btck_transaction_output_create(script_pubkey, amount);
+    const btck_TransactionOutput* output_ = output;
+ 
     btck_ScriptVerifyStatus status = btck_ScriptVerifyStatus_OK;
-
-    int result = btck_script_pubkey_verify(script_pubkey_, amount, transaction_, precomputed_data_, 0, btck_ScriptVerificationFlags_ALL, &status);
-
-    btck_transaction_output_destroy(spent_outputs);
+ 
+    int result = btck_script_pubkey_verify(
+            /*script_pubkey=*/ script_pubkey,
+            /*amount=*/ amount,
+            /*tx_to=*/ transaction,
+            /*spent_outputs=*/ &output_,
+            /*spent_outputs_len=*/1,
+            /*input_index=*/ 0,
+            /*flags=*/ btck_ScriptVerificationFlags_ALL,
+            /*status*/ &status);
+ 
+    btck_transaction_output_destroy(output);
     btck_script_pubkey_destroy(script_pubkey);
-    btck_precomputed_transaction_data_destroy(precomputed_data);
     btck_transaction_destroy(transaction);
-
-    if (result == 1) {
-        printf("Script Verification Succeeded.");
-    } else {
-        printf("Script Verification Failed.");
-    }
-
-    return 0;
+ 
+    return !(result && status == btck_ScriptVerifyStatus_OK);
 }

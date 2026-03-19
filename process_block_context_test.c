@@ -328,7 +328,7 @@ int main()
     };
 
     btck_Block* block = btck_block_create(block_data, sizeof(block_data));
-    if (block == NULL) {
+   (block == NULL) {
         printf("Failed to create block");
         return 1;
     }
